@@ -1,0 +1,17 @@
+type: action
+version: 1
+args:
+  name: sendMessage
+  definition:
+    kind: synchronous
+    handler: https://YOUR_N8N_WEBHOOK_URL/webhook/hasura-send-message
+    output_type: json
+    arguments:
+      - name: chat_id
+        type: uuid
+      - name: message
+        type: String
+    forward_client_headers: true
+    # optionally add comment or permissions metadata here
+permissions:
+  - role: user

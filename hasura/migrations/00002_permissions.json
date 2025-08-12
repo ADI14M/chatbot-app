@@ -1,0 +1,189 @@
+{
+  "version": 2,
+  "tables": [
+    {
+      "table": {
+        "schema": "public",
+        "name": "chats"
+      },
+      "select_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "filter": {
+              "user_id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            },
+            "columns": "*"
+          }
+        }
+      ],
+      "insert_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "check": {
+              "user_id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            },
+            "set": {
+              "user_id": "X-Hasura-User-Id"
+            },
+            "columns": "*"
+          }
+        }
+      ],
+      "update_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "filter": {
+              "user_id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            },
+            "check": {
+              "user_id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            },
+            "columns": "*"
+          }
+        }
+      ],
+      "delete_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "filter": {
+              "user_id": {
+                "_eq": "X-Hasura-User-Id"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "table": {
+        "schema": "public",
+        "name": "messages"
+      },
+      "select_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "filter": {
+              "chat_id": {
+                "_in": [
+                  {
+                    "select": {
+                      "columns": ["id"],
+                      "table": {
+                        "schema": "public",
+                        "name": "chats"
+                      },
+                      "where": {
+                        "user_id": {
+                          "_eq": "X-Hasura-User-Id"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "columns": "*"
+          }
+        }
+      ],
+      "insert_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "check": {
+              "chat_id": {
+                "_in": [
+                  {
+                    "select": {
+                      "columns": ["id"],
+                      "table": {
+                        "schema": "public",
+                        "name": "chats"
+                      },
+                      "where": {
+                        "user_id": {
+                          "_eq": "X-Hasura-User-Id"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "set": {},
+            "columns": "*"
+          }
+        }
+      ],
+      "update_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "filter": {
+              "chat_id": {
+                "_in": [
+                  {
+                    "select": {
+                      "columns": ["id"],
+                      "table": {
+                        "schema": "public",
+                        "name": "chats"
+                      },
+                      "where": {
+                        "user_id": {
+                          "_eq": "X-Hasura-User-Id"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "check": {},
+            "columns": "*"
+          }
+        }
+      ],
+      "delete_permissions": [
+        {
+          "role": "user",
+          "permission": {
+            "filter": {
+              "chat_id": {
+                "_in": [
+                  {
+                    "select": {
+                      "columns": ["id"],
+                      "table": {
+                        "schema": "public",
+                        "name": "chats"
+                      },
+                      "where": {
+                        "user_id": {
+                          "_eq": "X-Hasura-User-Id"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

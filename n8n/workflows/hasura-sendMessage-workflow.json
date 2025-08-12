@@ -1,0 +1,73 @@
+{
+  "name": "hasura-sendMessage-workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/hasura-send-message",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$json[\"headers\"][\"x-hasura-admin-secret\"] ? '{{$env.HASURA_URL}}' : '{{$env.HASURA_URL}}'}}",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={ \"query\": \"query GetChatOwner($chat_id: uuid!) { chats_by_pk(id: $chat_id) { user_id } }\", \"variables\": { \"chat_id\": {{$json[\"body\"][\"input\"][\"chat_id\"]}} } }"
+      },
+      "name": "CheckOwner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [550, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://api.openrouter.ai/v1/chat/completions",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={ \"model\": \"gpt-4o-mini\", \"messages\": [{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"}, {\"role\":\"user\",\"content\": {{$json[\"body\"][\"input\"][\"message\"]}}] }",
+        "headerParametersJson": "={ \"Authorization\": \"Bearer {{$credentials.openRouter.apiKey}}\", \"Content-Type\": \"application/json\" }"
+      },
+      "name": "OpenRouter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$env.HASURA_URL}}",
+        "jsonParameters": true,
+        "bodyParametersJson": "={ \"query\": \"mutation InsertBotMessage($chat_id: uuid!, $content: String!) { insert_messages_one(object: { chat_id: $chat_id, role: \\\"assistant\\\", content: $content }) { id content created_at } }\", \"variables\": { \"chat_id\": {{$json[\"body\"][\"input\"][\"chat_id\"]}}, \"content\": {{$node[\"OpenRouter\"].json[\"choices\"][0][\"message\"][\"content\"]}} } }",
+        "headerParametersJson": "={ \"x-hasura-admin-secret\": \"{{$env.HASURA_ADMIN_SECRET}}\", \"Content-Type\": \"application/json\" }"
+      },
+      "name": "InsertBotMessage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [1150, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { success: true, reply: $node[\"OpenRouter\"].json.choices[0].message.content } }];"
+      },
+      "name": "Return",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "CheckOwner", "type": "main", "index": 0 }]] },
+    "CheckOwner": { "main": [[{ "node": "OpenRouter", "type": "main", "index": 0 }]] },
+    "OpenRouter": { "main": [[{ "node": "InsertBotMessage", "type": "main", "index": 0 }]] },
+    "InsertBotMessage": { "main": [[{ "node": "Return", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {}
+}
